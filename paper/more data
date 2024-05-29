@@ -1,0 +1,29 @@
+The stochastic model used in this paper is a Markov model for simulating the payment behavior and collections from individual accounts with defaulted debt. Here are the key details:
+
+Inputs/Parameters:
+- Bi1 - Initial outstanding balance for account i
+- Ci1 - Credit score for account i 
+- Si1 - Initial operational segment for account i (1, 2 or 3 representing different collection strategies)
+- Yi0 - Payment indicator for account i in month preceding the simulation (0 or 1)
+- Pit = P(Yit=1|Yi(t-1),...,Yi0,Zit) - Probability of payment in month t, modeled via logistic regression as a function of credit score, previous payment, and operational segment.
+
+Stochastic Process:
+1) Initialize Bit, Cit, Sit, Yit according to the input parameters
+2) For each month t:
+    a) Calculatepit using the logistic regression model
+    b) Simulate Yit ~ Bernoulli(pit)  
+    c) If Yit = 1 (payment made), set Xit = min(50, Bit) as the collections amount
+        Else Xit = 0
+    d) Update Bi(t+1) = Bit - Xit
+    e) Update operational segment Sit based on transition rules
+
+This defines a Markov process for {Xit}, the collections from account i over time.
+
+Outputs:
+- Xit - Collections from account i in month t
+- Xi = Sum(Xit) - Total collections from account i over simulation period
+
+By simulating many realizations of this process and averaging, they can estimate E[Xi] and other quantities of interest.
+
+Data Creation:
+The paper does not use real data. The input parameters are randomly generated from specified distributions to create a representative heterogeneous population of accounts. Repeated stochastic simulations from the model for each account produce the data used for analysis and methodology development.
