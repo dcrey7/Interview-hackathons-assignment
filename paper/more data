@@ -27,3 +27,111 @@ By simulating many realizations of this process and averaging, they can estimate
 
 Data Creation:
 The paper does not use real data. The input parameters are randomly generated from specified distributions to create a representative heterogeneous population of accounts. Repeated stochastic simulations from the model for each account produce the data used for analysis and methodology development.
+------------------------------------------------------------------------------------------------------------------------------------------------------
+models
+
+From my understanding, the stochastic simulator used in this paper is primarily a Markov chain model, but it involves aspects of Monte Carlo simulation and Gaussian process emulation as well. Let me break down how each of these components is used:
+
+Markov Chain Model:
+- This forms the core underlying stochastic model for simulating the evolution of account balances, payments etc. over time
+- The state variables are Xit, Yit, Zit as you mentioned - collections, payment indicator, and account covariates in month t
+- Transition probabilities between states are governed by the logistic regression model for P(Yit=1| past states)
+- By simulating many time steps of this Markov chain, they generate realizations of {Xit, Yit, Zit} sequences
+
+Monte Carlo Simulation: 
+- This refers to the repeated simulation of the Markov chain model for each account to generate an ensemble of realizations
+- By averaging over these realizations, they can estimate expected collections E[Xit], uncertainties etc.
+- The optimal allocation of computational resources is essentially an application of stratified Monte Carlo variance reduction
+
+Gaussian Process Emulation:
+- This is used to create a statistical approximation (emulator) for the variance of individual account collections Var(Xi)
+- It models Var(Xi) as an unknown function of the account covariates Zi1, Yi0 using a Gaussian process prior
+- This emulator is used to pre-estimate the variance terms needed for the optimal allocation of Monte Carlo realizations
+
+So in summary:
+- Markov chain specifies the core stochastic evolution model for Xit, Yit, Zit
+- Monte Carlo provides the computational framework for simulating this model repeatedly 
+- Gaussian process emulation approximates input parameters (account variances) for the Monte Carlo optimizer
+
+The stochastic simulator combines elements of all three components to enable efficient simulation and uncertainty quantification for the overall collections process across the portfolio of accounts.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+Let me clearly specify the inputs and outputs of the stochastic model used in the paper:
+
+Inputs:
+- Initial account attributes (balances, credit scores, etc.) at the start of the simulation 
+- Probability distributions to simulate the values of these account attributes
+
+Outputs:
+- Realizations of the account attributes over time (balances, credit scores, payment statuses, etc.)
+
+To generate the realizations, they likely use the following inputs:
+
+Input Parameters (Inputs):
+- To initialize the balances, credit scores, etc. for each account at the start of the simulation
+
+Outputs (Realizations):
+- Yi0 - The payment status (0 if no payment was made, 1 if a payment was made) for account i in the first time period
+- Bi1 - The outstanding balance for account i in the first time period 
+- Zi(t) - A vector representing all the account attributes of account i after the t-th time period, including balances, credit scores, payment statuses, etc.
+
+For each account i, they simulate realizations of:
+
+ - Bi1 (outstanding balances in the first time period)
+ - Zi(t) (the account attributes after t time periods)
+
+Realizations of Bi1, Zi(t) are used to initiate the accounts and generate realizations of Yi0, Zi(t+1) (the account attributes in the next time period)
+
+These realizations, across all accounts, are used to generate realizations of:
+- Bt (the balances in time period t), 
+- Zt(t) (the account attributes after t time periods)
+
+Outputs (Realizations):
+- Bi2, Bi3, ... (the balances in time periods 2, 3, etc. for account i)  
+- Zi2, Zi3, ... (the account attributes after 2, 3, etc. time periods for account i)  
+
+By simulating many realizations of the accounts, they estimate:
+
+Realizations
+ - Yi(k) (the payment status for account i, k-th realization)
+ - Bt(k), Zt(k) (the balances and account attributes for t-th time period, k-th realization) 
+
+Outputs
+ - Bî(k), Ziî(k) (the realizations of the balances and account attributes, for k-th realization)
+
+To generate realizations of Bî(k), Ziî(k) for each k-th realization:
+- Simulate realizations Bt(k), Zt(k) of the balances and account attributes up to time period t  
+- Update balances, Bt+1(k), based on realizations Bt(k), Zt(k) (accounts, payment statuses, etc.) in time period t
+
+E.g. for the k-th simulation realization, 
+- Generate realizations Bî(k), Ziî(k) of the balances and account attributes for time periods 1, 2, etc.
+upto the k-th realization
+
+- For time period t, use Bt(k) to denote the balances (transactions, balances, payment statues, etc.) 
+in the k-th realization up to time period t
+
+By simulating realizations of Bt(k), Zt(k) for all k-th realizations, they generate the realizations
+Bî(k), Ziî(k) of the balances and account attributes used to produce the realizations Yi(k) of the
+payment statuses
+
+Outputs (Realizations)
+- Bî(k), Ziî(k) (the realizations of the balances and account attributes for the k-th realization)
+
+Does this clarification help?  Please let me know if you need any other details.
+
+----------------------------------------------------------------------------------------------------------------------------------------
+Pilot: The term "pilot" in the context of the paper refers to a preliminary version of the Monte Carlo simulation used to forecast and quantify uncertainty. It's typically used to test and refine the models and methods before they are applied on a larger scale or in real-world scenarios.
+
+GP Free and GP Optimised:
+
+GP Free likely refers to a scenario or model setup where Gaussian Process (GP) modeling is not utilized. This would mean relying on more straightforward or traditional statistical methods without the benefits of GP, such as improved estimation of uncertainty or variance reduction.
+GP Optimised indicates a scenario where Gaussian Process methods are specifically employed to enhance performance, particularly in terms of computational efficiency and accuracy of uncertainty quantification. The GP models help in estimating the variance and uncertainty more precisely, which is particularly useful in complex systems with many variables.
+Independent and Dependent Realisation:
+
+Independent Realisation likely pertains to simulations or forecasts that are generated independently of one another, without taking into account potential correlations between different accounts or segments within the model.
+Dependent Realisation refers to forecasts where dependencies or correlations between different elements (like accounts or time periods) are considered. This method acknowledges that outcomes in one part of the model might affect or be affected by outcomes in another, which can lead to more accurate and realistic forecasting.
+Protection of Portfolio-Level Forecasts: The paper proposes methodologies to protect portfolio-level forecasts by ensuring that variance thresholds are not exceeded. This is achieved by redistributing computational efforts towards accounts or sub-portfolios that are deemed more significant or risk-prone. By doing so, the overall uncertainty and variance within these crucial parts of the portfolio can be effectively managed and kept within acceptable limits.
+
+These elements collectively help in creating a robust forecasting system that can efficiently handle uncertainty and variability across large datasets, which is critical in financial contexts like debt recovery.
+
